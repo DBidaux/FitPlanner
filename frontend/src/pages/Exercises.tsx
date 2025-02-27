@@ -1,26 +1,53 @@
-import { useExercises } from "../hooks/useExercises";
-import { Exercise } from "../types/exercise";
+import { useExercises, useMuscleGroups } from "../hooks/useExercises";
+import { Exercise, Group } from "../types/exercise";
 import { useState } from "react";
+import DOMPurify from "dompurify";
 
 export default function Exercises() {
 	const [page, setPage] = useState(1);
-	const { data, isLoading, error } = useExercises(page);
-	console.log(data);
+	const [selectedMuscle, setSelectedMuscle] = useState<number | undefined>(
+		undefined
+	);
+	const { data, isLoading, error } = useExercises(page, selectedMuscle);
+	const { data: muscleGroups } = useMuscleGroups();
 
 	if (isLoading) return <p>Cargando ejercicios...</p>;
 	if (error) return <p>Ocurrió un error al cargar los ejercicios</p>;
-	if (!data) return <p>No se encontraron datos.</p>
+	if (!data) return <p>No se encontraron datos.</p>;
 
 	const totalPages = Math.ceil(data.totalCount / 20);
+
+	// Manejar cambio de grupo muscular y reiniciar la paginación
+	const handleMuscleChange = (
+		event: React.ChangeEvent<HTMLSelectElement>
+	) => {
+		const muscleId = event.target.value
+			? Number(event.target.value)
+			: undefined;
+		setSelectedMuscle(muscleId);
+		setPage(1); // Reiniciar la paginación al cambiar el filtro
+	};
 
 	return (
 		<div>
 			<h1>Ejercicios disponibles</h1>
+
+			{/* Selector grupo muscular */}
+			<label>Filtrar por grupo muscular:</label>
+			<select value={selectedMuscle || ""} onChange={handleMuscleChange}>
+				<option value="">Todos</option>
+				{muscleGroups?.map((group: Group) => (
+					<option key={group.id} value={group.id}>
+						{group.name}
+					</option>
+				))}
+			</select>
+
 			<ul>
-				{data.exercises.map((exercise:Exercise) => {
+				{data.exercises.map((exercise: Exercise) => {
 					const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
 						exercise.name
-					)}+explain+exercise`;
+					)}+explain+gym+exercise`;
 
 					return (
 						<li key={exercise.id} style={{ marginBottom: "20px" }}>
@@ -32,7 +59,13 @@ export default function Exercises() {
 							>
 								🔗 Ver en YouTube
 							</a>
-							<p>{exercise.description}</p>
+							<p
+								dangerouslySetInnerHTML={{
+									__html: DOMPurify.sanitize(
+										exercise.description
+									),
+								}}
+							></p>
 						</li>
 					);
 				})}

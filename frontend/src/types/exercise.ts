@@ -9,4 +9,9 @@ interface Image {
     image:string;
 }
 
-export type {Image, Exercise};
+interface Group {
+    id: number;
+    name: string;
+}
+
+export type {Image, Exercise, Group};

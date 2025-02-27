@@ -1,10 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchExercises } from "../api/exercises";
+import { fetchExercises, fetchMuscleGroups } from "../api/exercises";
 
-export const useExercises = (page: number) => {
+export const useExercises = (page: number, muscleGroup?: number) => {
     return useQuery({
-        queryKey: ["exercises", page],
-        queryFn: () => fetchExercises(page),
+        queryKey: ["exercises", page, muscleGroup],
+        queryFn: () => fetchExercises(page, muscleGroup),
         staleTime: 5000,
     });
 };
+
+export const useMuscleGroups = () => {
+    return useQuery({
+        queryKey:["muscleGroups"],
+        queryFn: fetchMuscleGroups
+    })
+}
