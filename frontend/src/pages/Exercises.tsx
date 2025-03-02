@@ -1,7 +1,11 @@
-import { useExercises, useMuscleGroups } from "../hooks/useExercises";
+import {
+	useExercises,
+	useMuscleGroups,
+	useYouTubeVideos,
+} from "../hooks/useExercises";
 import { Exercise, Group } from "../types/exercise";
+import ExerciseCard from "../components/ExerciseCard";
 import { useState } from "react";
-import DOMPurify from "dompurify";
 
 export default function Exercises() {
 	const [page, setPage] = useState(1);
@@ -10,8 +14,11 @@ export default function Exercises() {
 	);
 	const { data, isLoading, error } = useExercises(page, selectedMuscle);
 	const { data: muscleGroups } = useMuscleGroups();
+	const { data: videoIds, isLoading: isLoadingVideos } = useYouTubeVideos(
+		data?.exercises
+	);
 
-	if (isLoading) return <p>Cargando ejercicios...</p>;
+	if (isLoading || isLoadingVideos) return <p>Cargando ejercicios...</p>;
 	if (error) return <p>Ocurrió un error al cargar los ejercicios</p>;
 	if (!data) return <p>No se encontraron datos.</p>;
 
@@ -34,7 +41,7 @@ export default function Exercises() {
 
 			{/* Selector grupo muscular */}
 			<label>Filtrar por grupo muscular:</label>
-			<select value={selectedMuscle || ""} onChange={handleMuscleChange}>
+			<select value={selectedMuscle ?? ""} onChange={handleMuscleChange}>
 				<option value="">Todos</option>
 				{muscleGroups?.map((group: Group) => (
 					<option key={group.id} value={group.id}>
@@ -43,33 +50,34 @@ export default function Exercises() {
 				))}
 			</select>
 
-			<ul>
+			{/* Grid de ejercicios */}
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns:
+						"repeat(auto-fill, minmax(300px, 1fr))",
+					gap: "20px",
+					marginTop: "20px",
+				}}
+			>
 				{data.exercises.map((exercise: Exercise) => {
-					const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-						exercise.name
-					)}+explain+gym+exercise`;
+					const youtubeLink =
+						videoIds && videoIds[exercise.id]
+							? `https://www.youtube.com/embed/${
+									videoIds[exercise.id]
+							  }`
+							: "gym routine";
 
 					return (
-						<li key={exercise.id} style={{ marginBottom: "20px" }}>
-							<h3>{exercise.name}</h3>
-							<a
-								href={youtubeLink}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								🔗 Ver en YouTube
-							</a>
-							<p
-								dangerouslySetInnerHTML={{
-									__html: DOMPurify.sanitize(
-										exercise.description
-									),
-								}}
-							></p>
-						</li>
+						<ExerciseCard
+							key={exercise.id}
+							name={exercise.name}
+							youtubeLink={youtubeLink}
+							description={exercise.description}
+						/>
 					);
 				})}
-			</ul>
+			</div>
 
 			{/* Paginación */}
 			<div style={{ marginTop: "20px" }}>

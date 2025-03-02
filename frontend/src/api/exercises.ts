@@ -16,7 +16,7 @@ export const fetchExercises = async (page:number, muscleGroup?: number) => {
     const exercises = exerciseResponse.data.results
     
     //URL de la peticion
-    console.log(exerciseResponse.config.url)
+    // console.log(exerciseResponse.config.url)
 
 
     return{
@@ -30,3 +30,30 @@ export const fetchMuscleGroups = async()=>{
     const response = await axios.get(`${API_URL}/exercisecategory/`);
     return response.data.results;
 }
+
+const YOUTUBE_API_KEY = "AIzaSyAqEXv66pr6683m7ZfslxEE575Snh0UHYA";
+const YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/search";
+
+export const fetchYouTubeVideoId = async (query: string): Promise<string | null> => {
+    try {
+        const response = await axios.get(YOUTUBE_API_URL, {
+            params: {
+                part: "snippet",
+                q: query,
+                type: "video",
+                maxResults: 1,
+                key: YOUTUBE_API_KEY,
+            },
+        });
+
+        const items = response.data.items;
+        if (items && items.length > 0) {
+            return items[0].id.videoId;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching YouTube video ID:", error);
+        return null;
+    }
+};
